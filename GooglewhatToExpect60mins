@@ -3,3 +3,9 @@ Expect the test to cover:ML Concepts: Questions on feature engineering, handling
 Coding & Algorithms: Write or debug a fast, memory-efficient algorithm using Python to process transaction data, or apply tree-based machine learning (like XGBoost or Random Forests) to detect anomalies.
 SQL Queries: Basic-to-intermediate SQL questions to aggregate transactional data, join tables, and filter suspicious accounts.
 Business Logic & Evaluation: The business judgment component requires you to analyze the trade-offs of an ML model. You will need to weigh the cost of a false positive (declining a legitimate customer) against a false negative (approving a fraudulent transaction).
+
+
+How to PrepareReview
+Imbalanced Data: Fraud data is highly skewed. Focus your preparation on techniques like SMOTE, undersampling, and cost-sensitive learning.
+Practice Data Manipulation: Use platforms like LeetCode or HackerRank to practice data structures and algorithm problems under strict time constraints.
+Understand the Domain: Familiarize yourself with financial metrics and the mechanics of preventing account takeovers and money laundering
