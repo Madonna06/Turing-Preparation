@@ -97,12 +97,80 @@ How would you handle this imbalance?
 Expected answers:
 
 SMOTE
+
+How it works: It looks at the feature space of the minority class. For a given fraud data point, it finds its nearest neighbors (using k-Nearest Neighbors), draws a line between them in the multi-dimensional space, and places a new synthetic data point somewhere along that line.
+
+Pros: Prevents overfitting by introducing new, unobserved feature combinations to the model.
+
+Cons: Can cause severe overgeneralization and noise. If a fraud data point is an outlier sitting right next to legitimate transactions, SMOTE will draw lines between them, creating synthetic fraud points inside the legitimate data zone, blurring the decision boundary.
+
 Random oversampling
+
+How it works: It randomly selects existing minority class examples (fraud) and duplicates them exactly until the desired class ratio is achieved.
+
+Pros: Incredibly simple to implement and requires zero mathematical configuration.
+
+Cons: Leads to severe overfitting. The model essentially memorizes the exact copied data points rather than learning the underlying patterns of fraud.
+
 Random undersampling
+
+How it works: It randomly selects and deletes examples from the majority class (legitimate) until the dataset matches the size of the minority class.
+
+Pros: Radically reduces training time and data storage requirements because the overall dataset becomes much smaller.
+
+Cons: Causes massive information loss. You throw away valuable data regarding what constitutes a "normal" transaction, which can cause the model to flag a high number of false positives in production.
 Class weights
+
+How it works: During the training optimization phase (like Gradient Descent), the loss calculated for a misclassified minority sample is multiplied by a heavy weight factor. If your ratio is 1:100, a missed fraud case costs the model 100 times more than a missed clean transaction.
+
+Pros: Highly effective for linear algorithms, logistic regression, and standard neural networks without changing the underlying dataset.
+
+Cons: Can cause the model to become overly cautious, severely hurting Precision (generating too many false alerts).
 Focal Loss
+
+Focal Loss is a dynamic loss function originally designed for computer vision but highly adapted for tabular fraud models.
+
+How it works: Standard loss functions treat all errors relatively equally. Focal Loss adds a modulating factor \((1 - p)^\gamma\) to the down-weight easy-to-classify examples. If the model is 99% confident a transaction is legitimate, Focal Loss drops the importance of that row to near zero. Instead, it forces the model's entire attention onto hard, ambiguous examples (the gray area where fraud hides).
+
+Pros: Stops the massive volume of easy legitimate transactions from overwhelming the model's gradients during training.
+
+Cons: Requires fine-tuning an extra hyperparameter (\(\gamma \), gamma), and is computationally heavier to calculate.
+
 Balanced Random Forest
+
+A specialized variation of the standard Random Forest algorithm.
+
+How it works: When building each individual tree in the forest, the algorithm takes a bootstrap sample of the data. However, instead of taking a random sample of the whole dataset, it performs Random Undersampling independently for each tree. Each tree trains on a balanced subset containing all minority samples and a matching, randomly selected chunk of majority samples.
+
+Pros: Retains the high predictive power of Random Forest while bypassing the information-loss penalty of standard global undersampling, because every piece of majority data is eventually seen by different trees.
+
+Cons: Can be slow to train and has a larger memory footprint than standard tree models.
+
 XGBoost scale_pos_weight
+
+This is a built-in hyperparameter specifically inside the XGBoost library designed to manage extreme imbalance.
+
+How it works: It controls the balance of positive (fraud) and negative (legitimate) weights. It directly scales the gradients of the positive class. The standard formula to calculate it is:\(\text{scale\_pos\_weight}=\frac{\text{Total\ Number\ of\ Negative\ (Legitimate)\ Samples}}{\text{Total\ Number\ of\ Positive\ (Fraud)\ Samples}}\)If you have 99,000 legitimate rows and 1,000 fraud rows, you set scale_pos_weight = 99.
+
+Pros: Simple, clean hyperparameter implementation that scales directly with the data ratio. It drastically improves Recall for tree boosting.
+
+Cons: It completely distorts the raw predicted probabilities. Instead of outputting a true probability (e.g., 0.05 risk), the model's raw score outputs will skew incredibly high. If you need calibrated probabilities for business logic risk thresholds, you must manually post-calibrate the model outputs.
+
+How scale_pos_weight Changes the Math
+
+When you set scale_pos_weight = 99, XGBoost manually rewrites its objective loss function. It takes every single gradient (\(g\)) and Hessian (\(h\)) belonging to a positive sample (Fraud) and multiplies it directly by 99.
+
+Majority Row Error: Contributes \(1 \times g\) to the tree split calculation.
+
+Minority Row Error: Contributes \(99 \times g\) to the tree split calculation.
+
+Now, let's look at the balance of power inside the leaf node calculation:
+
+Total power of Majority Class: \(99,000 \times 1 = 99,000\)
+
+Total power of Minority Class: \(1,000 \times 99 = 99,000\)
+
+Mathematically, the two classes now possess equal weight. Even though there are physically 99 times more majority rows in your RAM, the optimization algorithm treats a single error on a fraud case as 99 times more devastating than an error on a legitimate transaction.
 Q7.
 
 When would you NOT use SMOTE?
