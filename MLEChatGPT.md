@@ -21,6 +21,7 @@ Velocity features
 Geographic distance from previous transaction
 Hour of day/weekend/night
 Customer lifetime statistics
+
 Q2.
 
 You notice merchant_id has 500,000 unique values.
