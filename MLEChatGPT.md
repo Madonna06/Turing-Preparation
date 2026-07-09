@@ -343,6 +343,8 @@ Yes.
 
 Explain with an example.
 
+The F1-score completely ignores True Negatives (TN). It only cares about how well you handle the positive class alarms. Because the model completely failed to identify a single clean transaction, its baseline architectural accuracy collapsed to 50%, while its F1-score remained mathematically sky-high.
+
 Q17.
 
 Can accuracy be 99% while Recall is 0?
@@ -370,6 +372,8 @@ Expected:
 
 False Positive Rate remains small because there are many negatives.
 
+In a highly imbalanced fraud dataset, the number of Total Actual Negatives is overwhelmingly massive compared to the positive class. Because this denominator is so vast, even a huge number of False Positives will fail to move the fraction
+
 Model may appear good despite poor fraud detection.
 
 Q20.
@@ -383,6 +387,8 @@ Expected:
 PR-AUC.
 
 Because it focuses on minority class performance.
+
+If you evaluate this exact same model using Precision (which ignores the massive True Negatives column and focuses strictly on the accuracy of your active alarms), the operational failure becomes instantly clea
 
 Q21.
 
@@ -399,6 +405,12 @@ Expected:
 No.
 
 Investigators would receive too many false alarms.
+
+The model is generating an overwhelming avalanche of false alarms that would break your operations team.
+
+A Precision of 0.07 (7%) means that out of every 100 fraud alerts the model triggers, only 7 are actual fraud. The other 93 alerts are completely false alarms—innocent customers who are getting their credit cards blocked or accounts frozen unnecessarily.
+
+The high ROC-AUC of 0.98 makes the model look nearly perfect on paper. However, as we discussed, ROC-AUC is completely blinded by the massive number of legitimate transactions in an imbalanced dataset.If your company processes 1,000,000 transactions a day, a 1% False Positive Rate sounds small to ROC-AUC, but it translates to 10,000 false alarms every single day.
 
 Threshold Questions
 Q22.
