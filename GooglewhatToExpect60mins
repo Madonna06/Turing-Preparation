@@ -1,0 +1,5 @@
+What to Expect in 60 MinutesThe time limit is the biggest challenge. 
+Expect the test to cover:ML Concepts: Questions on feature engineering, handling highly imbalanced datasets, and selecting the right evaluation metrics (e.g., Precision vs. Recall, F1-Score, and ROC-AUC) for fraud models.
+Coding & Algorithms: Write or debug a fast, memory-efficient algorithm using Python to process transaction data, or apply tree-based machine learning (like XGBoost or Random Forests) to detect anomalies.
+SQL Queries: Basic-to-intermediate SQL questions to aggregate transactional data, join tables, and filter suspicious accounts.
+Business Logic & Evaluation: The business judgment component requires you to analyze the trade-offs of an ML model. You will need to weigh the cost of a false positive (declining a legitimate customer) against a false negative (approving a fraudulent transaction).
