@@ -27,6 +27,8 @@ You notice merchant_id has 500,000 unique values.
 
 How would you encode it?
 
+Can refer : https://medium.com/@bhatadithya54764118/day-30-encoding-categorical-variables-one-hot-label-and-target-encoding-23c2e38eeb6a
+
 Expected answers
 
 Target encoding (carefully)
