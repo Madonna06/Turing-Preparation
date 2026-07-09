@@ -500,10 +500,33 @@ How would you detect concept drift?
 Expected:
 
 Monitor Precision/Recall
+
+You log the model's daily or weekly Precision, Recall, and F1-score. If you observe a steady, downward trend in these metrics while your transaction volume remains stable, it indicates that the underlying fraud patterns have shifted, and your model's learned decision boundaries are no longer valid
+
 PSI
+
+Because of the feedback lag in performance metrics, you need statistical metrics that check for drift instantly without waiting for the ground truth. PSI measures how much your model's predictions or inputs have shifted between two time periods.
+
+How it works: You compare a baseline distribution (e.g., your training dataset) against a target distribution (e.g., this week's production data). You bin your model's continuous probability outputs into buckets (like 0.0-0.1, 0.1-0.2, etc.) and calculate PSI using this formula:\(\text{PSI}=\sum \left((\text{Actual}\%-\text{Expected}\%)\times \ln \left(\frac{\text{Actual}\%}{\text{Expected}\%}\right)\right)\)
+
+How to interpret it:PSI < 0.1: Stable. No significant shift has occurred.0.1 ≤ PSI ≤ 0.25: Moderate drift. You should begin investigating and planning a model retrain.PSI > 0.25: Severe drift. The model's prediction habits have completely changed. You must retrain or take the model offline immediately.
+
 KL divergence
+
+KL Divergence is an information-theory metric that measures the statistical distance between two probability distributions. It quantifies exactly how much information is lost if you use your training data distribution to approximate your live production data distribution.
+
 Feature distributions
+
+While concept drift is a shift in the relationship between features and the target, data drift is a shift in the independent features themselves. Monitoring feature distributions is an excellent early-warning proxy for concept drift.
+
 Drift detection libraries
+
+Evidently AI: An excellent library for tabular data. It generates comprehensive, visual data-drift dashboards and data-quality reports. It automatically applies the appropriate statistical tests (KS-test, Chi-square, PSI) based on the column types and flags precisely which features are drifting.
+
+PSI is better than KL Divergence
+
+PSI (Population Stability Index) is better for monitoring production machine learning models and tracking data drift across your 100 features.While KL Divergence is incredibly powerful for mathematical optimization during model training, PSI is the superior choice for production engineering because it is built to be a reliable, automated alarm system.
+
 Q28.
 
 What would you monitor after deployment?
@@ -534,6 +557,8 @@ How would you split fraud data into train and test?
 Expected:
 
 Use stratified splitting to preserve the fraud/non-fraud ratio.
+
+Stratified splitting is a data-partitioning technique that ensures your training set and testing set contain the exact same percentage of fraud and non-fraud transactions as your original raw dataset
 
 Rapid-Fire Questions (Common at Turing)
 Why is one-hot encoding bad for high-cardinality features?
