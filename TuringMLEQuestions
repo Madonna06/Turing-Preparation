@@ -173,6 +173,162 @@ Low Priority:
 Algorithmic Inconsistencies
 Calculating Precision/Recall for Unsupervised Clustering: k-Means blindly clusters data without labels. To get a Precision of 0.18 and a Recall of 0.1, someone had to manually map the blind clusters to the fraud labels after the fact, which is highly unstable and an improper way to evaluate a clustering algorithm.
 
+def train_fraud_nn(X, y, epochs=10, batch_size=64, lr=1e-3):
+    dataset = TensorDataset(X, y)
+    train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+
+    model = nn.Sequential(
+        nn.Linear(X.size(1), 128), nn.ReLU(),
+        nn.Linear(128, 64), nn.ReLU(),
+        nn.Linear(64, 2), nn.Sigmoid()
+    ).to(device)
+
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+    best_loss, best_state = float("inf"), None
+
+    for _ in range(epochs):
+        model.eval()
+        for xb, yb in train_loader:
+            outputs = model(xb.to(device))
+            loss = criterion(outputs, yb)
+            loss.backward()
+            optimizer.step()
+
+        model.train()
+        val_loss = sum(
+            criterion(model(xb.to(device)), yb).item()
+            for xb, yb in val_loader
+        ) / len(val_loader)
+
+        if loss.item() < best_loss:
+            best_loss, best_state = loss.item(), model.state_dict()
+
+    model.load_state_dict(best_state)
+    return model
+
+Errors in the train_fraud_nn() function
+
+1. Training and evaluation modes are reversed
+   - The code uses model.eval() during training and model.train() during validation.
+   - Correct usage:
+       model.train()   # Before training loop
+       model.eval()    # Before validation
+
+
+Purpose:
+- It tells the model that it is no longer training but is instead making predictions or being evaluated.
+
+Effects:
+1. Disables Dropout
+   - During training, Dropout randomly turns off neurons to reduce overfitting.
+   - During evaluation, all neurons are used (no dropout).
+
+2. Uses Batch Normalization statistics
+   - During training, Batch Normalization uses the statistics of the current mini-batch.
+   - During evaluation, it uses the running mean and running variance learned during training.
+
+2. Missing optimizer.zero_grad()
+   - Gradients accumulate across batches because optimizer.zero_grad() is never called.
+   - Correct order:
+       optimizer.zero_grad()
+       loss.backward()
+       optimizer.step()
+
+3. Training and validation use the same dataset
+   - train_loader and val_loader are both created from the same dataset.
+   - This does not provide a true validation set.
+   - The dataset should be split into separate training and validation datasets.
+
+4. Validation is performed without torch.no_grad()
+   - Validation should be wrapped in:
+       with torch.no_grad():
+   - This prevents unnecessary gradient computation and reduces memory usage.
+
+5. Wrong loss is used to select the best model
+   - The code calculates val_loss but compares loss.item().
+   - loss.item() is only the loss from the last training batch.
+   - It should compare val_loss instead.
+
+6. state_dict() is not deep copied
+   - best_state = model.state_dict() only stores references to the model parameters.
+   - As training continues, best_state is updated automatically.
+   - It should use:
+       copy.deepcopy(model.state_dict())
+
+7. Incorrect output activation for CrossEntropyLoss
+   - The model ends with:
+       nn.Linear(64, 2)
+       nn.Sigmoid()
+   - CrossEntropyLoss expects raw logits.
+   - The Sigmoid layer should be removed.
+
+8. Labels are not moved to the device
+   - Inputs are moved to the device:
+       xb.to(device)
+   - Labels remain on the CPU:
+       yb
+   - Both inputs and labels should be on the same device.
+
+9. Validation labels are also not moved to the device
+   - Validation loss should use:
+       criterion(model(xb.to(device)), yb.to(device))
+
+10. best_state may be None
+    - If no model is saved, calling:
+        model.load_state_dict(best_state)
+      will raise an error.
+    - A check should be performed before loading.
+
+11. Validation loader should not shuffle
+    - Validation DataLoader should use:
+        shuffle=False
+    - Shuffling validation data is unnecessary.
+
+12. Only the last batch loss is used
+    - The variable loss contains only the loss from the final training batch.
+    - Training loss should be accumulated over all batches to obtain the epoch loss.
+
+13. No validation metrics are computed
+    - The function only computes loss.
+    - Metrics such as accuracy, precision, recall, F1-score, or ROC-AUC are useful, especially for fraud detection.
+
+14. No train/validation split
+    - Since the same dataset is used for both loaders, the validation performance will be overly optimistic and does not measure generalization.
+
+Summary of Major Errors:
+- Reversed train() and eval() modes.
+- Missing optimizer.zero_grad().
+- Training and validation use the same dataset.
+- Missing torch.no_grad() during validation.
+- Compares training loss instead of validation loss.
+- state_dict() is not deep copied.
+- Uses Sigmoid with CrossEntropyLoss.
+- Labels are not moved to the correct device.
+- Validation loader unnecessarily shuffles data.
+- Only the last batch loss is tracked.
+- No evaluation metrics are calculated.
+- Potential failure if best_state is None.
+
+| Error                                              | Impact                                 |
+| -------------------------------------------------- | -------------------------------------- |
+| `model.eval()` during training                     | Incorrect training behavior            |
+| `model.train()` during validation                  | Incorrect validation behavior          |
+| Missing `optimizer.zero_grad()`                    | Gradient accumulation                  |
+| Same dataset for training and validation           | Invalid evaluation                     |
+| Missing `torch.no_grad()` in validation            | Wasted memory/computation              |
+| Comparing training loss instead of validation loss | Incorrect model selection              |
+| `state_dict()` not deep copied                     | Best model overwritten                 |
+| Using `Sigmoid` with `CrossEntropyLoss`            | Incorrect loss usage                   |
+| Labels not moved to device                         | Runtime error on GPU                   |
+| Validation labels not moved to device              | Runtime error on GPU                   |
+| `best_state` may be `None`                         | Potential crash                        |
+| Validation loader shuffled                         | Unnecessary                            |
+| Only last batch loss used                          | Poor monitoring                        |
+| No evaluation metrics                              | Limited insight into model performance |
+
+
 
 
 
