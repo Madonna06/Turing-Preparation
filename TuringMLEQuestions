@@ -22,3 +22,33 @@ Low Priority:
 Business ConstraintsNo mention of false positives: A smooth customer experience requires minimizing legitimate transactions flagged as fraud.
 Missing feedback loop: There is no strategy outlined for how the model will learn from newly discovered fraud patterns.
 
+Data Exploration
+We have 18 months of transaction data but will only use the last 2 weeks.
+Data includes 47 countries and 8 currencies.
+There are 223 payment processors and 42 types of devices.
+Data
+● fraud_flag
+● country
+● device_type
+● transaction_timestamp
+● amount_usd
+● user_id
+Turing - Assessment Material
+● number_of_attempts
+
+
+High Priority:
+
+Data Sufficiency & Label MaturitySevere data downsizing: Discarding 18 months of data for a 2-week window severely limits the model's ability to learn rare fraud patterns.
+Label maturity lag: Fraud chargebacks typically take 30 to 90 days to surface. The past 2 weeks of data will contain incomplete fraud labels, training the model on false negatives.
+No behavioral history: A 2-week window makes it impossible to build long-term user baseline profiles or calculate historical spending habits.
+Missing seasonality: The model will fail to capture cyclic fraud trends, holiday shopping spikes, or monthly patterns.
+
+Medium Priority: Feature Scarcity & Cardinality
+Extremely sparse categories: Matching 223 payment processors and 47 countries against only 2 weeks of data results in severe data sparsity.
+No velocity features: The dataset lacks vital fraud signals like transaction frequency within the last 1, 10, or 60 minutes.
+No network or location signals: Important fraud indicators like IP address, proxy usage, and email age are missing.
+
+Low Priority:
+Data ConsistencyCurrency conversion ambiguity: The feature listed is amount_usd, but the data contains 8 currencies. It is unclear if conversions use historical or real-time rates.
+
