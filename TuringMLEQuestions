@@ -157,5 +157,22 @@ Destructive Feature Filtering: Forcing a linear correlation threshold of \(\ge 0
 Low Priority:
 Unsupervised Limitationsk-Means cannot target fraud directly: It is an unsupervised clustering tool. While it can flag weird anomalies, it cannot be optimized for business-critical metrics like Precision or Recall.
 
+Results
+ARIMA
+Linear Regression
+Random Forest
+Deep NN (22 layers)
+LSTM
+
+High Priority: 
+Statistical Impossibilities & Broken MathLSTM 
+Precision is 1.2: Precision is a probability metric that strictly scales between 0.0 and 1.0 (or 0% to 100%). A value of 1.2 is a mathematical impossibility. This usually happens if the code manually calculated precision and accidentally divided by the wrong denominator.
+LSTM R² is 1.1: The Coefficient of Determination (R²) has an absolute maximum value of 1.0 (which represents a perfect model that explains 100% of the variance). A score of 1.1 is mathematically impossible.
+
+Low Priority:
+Algorithmic Inconsistencies
+Calculating Precision/Recall for Unsupervised Clustering: k-Means blindly clusters data without labels. To get a Precision of 0.18 and a Recall of 0.1, someone had to manually map the blind clusters to the fraud labels after the fact, which is highly unstable and an improper way to evaluate a clustering algorithm.
+
+
 
 
