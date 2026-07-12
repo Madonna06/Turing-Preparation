@@ -263,12 +263,167 @@ Effects:
        nn.Sigmoid()
    - CrossEntropyLoss expects raw logits.
    - The Sigmoid layer should be removed.
+    Correct model:
+
+    model = nn.Sequential(
+        nn.Linear(X.size(1), 128),
+        nn.ReLU(),
+        nn.Linear(128, 64),
+        nn.ReLU(),
+        nn.Linear(64, 2)
+    ).to(device)
+
+Why are there two ReLU() layers?
+
+The two ReLU layers are used because there are two hidden layers in the neural network.
+
+The structure is:
+
+Input Layer
+      |
+      v
+Linear Layer 1
+      |
+      v
+ReLU 1
+      |
+      v
+Linear Layer 2
+      |
+      v
+ReLU 2
+      |
+      v
+Output Layer
+
+
+Your code:
+
+    model = nn.Sequential(
+        nn.Linear(X.size(1), 128),  # First hidden layer
+        nn.ReLU(),                 # Activation after first layer
+
+        nn.Linear(128, 64),        # Second hidden layer
+        nn.ReLU(),                 # Activation after second layer
+
+        nn.Linear(64, 2)            # Output layer
+    )
+
+
+Why put ReLU after each hidden layer?
+
+A Linear layer by itself can only learn linear relationships.
+
+Example:
+
+    output = weight * input + bias
+
+
+Even if you stack many Linear layers together without ReLU, the whole network behaves like a single linear equation.
+
+Fraud patterns are not usually simple linear relationships.
+
+Example:
+
+A transaction may be suspicious because of a combination of factors:
+
+    High amount
+    + New device
+    + Foreign location
+    + Unusual transaction time
+
+The relationship between these features is complex.
+
+
+ReLU adds non-linearity.
+
+Example:
+
+Before ReLU:
+
+    [-2, 5, -1, 8]
+
+After ReLU:
+
+    [0, 5, 0, 8]
+
+
+This allows the network to learn more complicated patterns.
+
+
+Why not just use one ReLU?
+
+You could technically use one, but each hidden layer benefits from an activation function.
+
+The first layer might learn simple patterns:
+
+    Layer 1:
+    - unusual transaction amount
+    - unusual time
+    - unusual location
+
+
+The second layer combines those patterns:
+
+    Layer 2:
+    - suspicious behavior pattern
+    - possible fraud
+
+
+The ReLU after each layer allows each layer to transform and refine the information before passing it forward.
+
+
+Why is there no ReLU after the final layer?
+
+The final layer:
+
+    nn.Linear(64, 2)
+
+produces raw scores (logits).
+
+Example:
+
+    [2.4, -1.1]
+
+CrossEntropyLoss needs these raw values.
+
+If you add ReLU:
+
+    [2.4, 0]
+
+you destroy useful information because negative scores are meaningful for classification.
+
+If you add Sigmoid or Softmax:
+
+    CrossEntropyLoss already does that internally.
+
+So the usual pattern is:
+
+    Linear → ReLU → Linear → ReLU → Linear → CrossEntropyLoss
+
+
+For fraud detection, this means:
+
+    Transaction features
+          |
+          v
+    Learn basic patterns
+          |
+          v
+    Combine patterns
+          |
+          v
+    Output:
+        Class 0 = Not Fraud
+        Class 1 = Fraud
 
 8. Labels are not moved to the device
    - Inputs are moved to the device:
        xb.to(device)
    - Labels remain on the CPU:
        yb
+     Why move the labels?
+     The loss function compares the model's predictions with the true labels.
    - Both inputs and labels should be on the same device.
 
 9. Validation labels are also not moved to the device
@@ -289,6 +444,27 @@ Effects:
 12. Only the last batch loss is used
     - The variable loss contains only the loss from the final training batch.
     - Training loss should be accumulated over all batches to obtain the epoch loss.
+
+    for _ in range(epochs):
+    model.train()
+    epoch_loss = 0
+
+    for xb, yb in train_loader:
+        xb = xb.to(device)
+        yb = yb.to(device)
+
+        optimizer.zero_grad()
+
+        outputs = model(xb)
+        loss = criterion(outputs, yb)
+
+        loss.backward()
+        optimizer.step()
+
+        epoch_loss += loss.item()
+
+    # Average training loss for this epoch
+    epoch_loss /= len(train_loader)
 
 13. No validation metrics are computed
     - The function only computes loss.
