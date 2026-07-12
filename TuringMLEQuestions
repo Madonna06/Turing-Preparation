@@ -76,5 +76,86 @@ Survivorship bias in the graph: The chart states it is "Filtered < 400ms". It hi
 Low Priority: 
 Deduplication RisksNaive duplicate removal: Fraudsters frequently launch "card-testing" attacks by submitting identical transactions in rapid succession. Removing duplicates without verifying the timestamps might erase the exact attack pattern you need to catch.
 
+Feature Engineering
+
+Created the following features:
+Categorical
+● country
+● currency
+● device_type
+We also built non-linear versions:
+● sin_time
+● cos_time
+● log_transaction_amount
+Numerical
+● user_id
+● number_of_attempts
+● transaction_amount_usd
+● avg_user_transaction_amount
+● hour_of_day
+● day_of_week
+Turing - Assessment Material
+● time_since_last_login
+
+High Priority:
+Data Type Violations & Missing SignalsTreating user_id as numerical: An ID is a nominal categorical identifier. Treating it as a continuous number forces the model to look for meaningless mathematical relationships (e.g., assuming user #9000 is "greater than" user #1000).
+Complete lack of time-bound velocity features: Fraudsters operate in high-speed bursts. The dataset is missing critical short-term counters like "transactions in the last 5 minutes" or "distinct cards tried in the last hour."
+No anomaly cross-features: The features look at variables in isolation. It completely misses mismatch indicators, such as whether the country of the transaction matches the user's registration country or their usual currency.
+Medium Priority:
+Redundant & Poorly Encoded Time FeaturesConflicting time representations: The model feeds raw hour_of_day (0–23) as a linear numerical feature while also using sin_time and cos_time. 
+Linear encoding tells the model that hour 23 and hour 0 are as far apart as possible, which contradicts the cyclical sine/cosine transformation.
+Vague number_of_attempts scope: It is unclear if this counter tracks lifetime attempts, login attempts, or failed checkout attempts within a specific session.
+
+Low Priority: 
+Lack of Identity and Device AnchorsWeak device profiling: Simply using device_type (e.g., Mobile vs. Desktop) is too broad. 
+High-performing fraud models require specific device fingerprints, browser hashes, or operating system versions to flag botnets.
+
+Data Exploration
+● Scatterplots suggest strong non-linear patterns → linear models likely biased
+● Logistic regression seems complex because assumptions rarely hold
+● Device type doesn’t correlate well so removed from all models
+● Pearson correlation matrix indicates amount_usd is most useful feature
+
+High Priority: 
+Flawed Feature Elimination & Metric Misuse
+Misusing Pearson correlation on non-linear data: The first bullet admits the data has "strong non-linear patterns," but the fourth bullet uses a Pearson correlation matrix to decide feature usefulness. Pearson only measures linear relationships. If the data is non-linear, a feature could be highly predictive but show a Pearson score near zero.
+Prematurely dropping device_type: Dropping a feature because it "doesn't correlate well" independently is a massive mistake. device_type is categorical, and its power comes from feature interactions (e.g., a desktop login might be safe, but a sudden switch to an uncommon mobile emulator at 3 AM is highly suspicious).
+
+Medium Priority: 
+Mischaracterizing ModelsCalling Logistic Regression "complex": Logistic regression is the industry-standard baseline for binary classification because it is incredibly fast, simple, and interpretable. Claiming it is too complex because "assumptions rarely hold" is backwards—it is often used as a robust starting point precisely because it behaves predictably even when assumptions are violated.
+Low Priority: 
+Lack of Non-Linear Exploration Metrics
+No non-linear importance metrics used: Since non-linear patterns were observed, the analysis should have used metrics like Mutual Information scores, Spearman's rank correlation, or baseline tree-based feature importances instead of relying on scatterplots and Pearson matrices.
+
+1. It Measures Monotonic Relationship
+sA relationship is monotonic if, as one variable increases, the other variable either always increases or always decreases, even if the rate of change is not a straight line.
+
+Linear (Pearson & Spearman catch this): As \(X\) goes up, \(Y\) goes up by a constant amount.
+Monotonic (Only Spearman catches this well): As \(X\) goes up, \(Y\) goes up, but it curves or accelerates.
+Non-Monotonic (Neither catches this): A U-shaped curve where \(Y\) goes up and then comes back down.
+
+Model Selection
+We automated model selection using AutoML by GCP and kept features with correlation ≥ 0.4
+Models tested
+● ARIMA
+● Linear Regression
+● Random Forest
+● Deep Neural Network (22 layers)
+● LSTM
+● k-Means clustering
+
+High Priority: 
+Linear Regression & ARIMA Mismatch
+Linear Regression outputs continuous ranges: Fraud detection requires a bounded probability between 0.0 (Safe) and 1.0 (Fraud). Linear regression can output values like -5.2 or 12.4, making it mathematically incorrect for binary classification unless converted into Logistic Regression.
+ARIMA is for forecasting aggregate metrics: ARIMA predicts future data points based on past trends (e.g., forecasting total fraud volume next month for budgeting). It cannot evaluate an individual, live transaction at checkout to decide if it should be blocked.
+
+Medium Priority: 
+Data Constraints & Latency RisksThe 2-Week Data Bottleneck for LSTMs: Because the previous slides established that the dataset was cut down to just 2 weeks, an LSTM won't have enough sequential history per user to build a reliable behavioral baseline.
+Severe Over-Engineering (22-Layer DNN): Deep networks with 22 layers are built for computer vision or massive LLMs. For tabular data, they suffer from extreme overfitting, require massive compute, and will break a strict production latency budget (which usually requires responses in under 50ms).
+Destructive Feature Filtering: Forcing a linear correlation threshold of \(\ge 0.4\) on a binary target likely deleted all the core features needed by the Random Forest and LSTM to do their jobs.
+
+Low Priority:
+Unsupervised Limitationsk-Means cannot target fraud directly: It is an unsupervised clustering tool. While it can flag weird anomalies, it cannot be optimized for business-critical metrics like Precision or Recall.
+
 
 
