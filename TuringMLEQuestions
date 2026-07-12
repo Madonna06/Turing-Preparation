@@ -52,3 +52,29 @@ No network or location signals: Important fraud indicators like IP address, prox
 Low Priority:
 Data ConsistencyCurrency conversion ambiguity: The feature listed is amount_usd, but the data contains 8 currencies. It is unclear if conversions use historical or real-time rates.
 
+ Data Cleaning
+● Removed NaN values and 
+duplicates
+● Fraudulent transactions 
+above $20,000 are removed 
+as outliers since typically 
+fraudulent payments stay 
+under this amount
+● Chargebacks older than 90 
+days were excluded because 
+they are hard to model
+
+High Priority: 
+Flawed Data Filtering & Information LossRemoving high-value fraud ($20,000+): Dropping these because they are "outliers" is a severe mistake. While they may be rare, these high-value attacks represent the highest financial risk to the company. The model must learn to catch them.
+Excluding chargebacks older than 90 days: Older chargebacks are vital for establishing a reliable ground truth. Because banks take up to 90+ days to process disputes, excluding them means you are training the model on incomplete, heavily biased historical data.
+Blindly removing NaN values: Missing data in fraud detection is often highly predictive (e.g., a fraudster hiding behind a VPN might result in a missing location or null device ID). Dropping these rows throws away strong fraud signals and reduces dataset size.
+
+Medium Priority: 
+Graph & Operational DisconnectIrrelevant chart metrics: The histogram tracks API "response time" in milliseconds. While system latency is important for engineering, it has no relevance to Data Cleaning for model features or fraud pattern identification.
+Survivorship bias in the graph: The chart states it is "Filtered < 400ms". It hides the long-tail latency issues, meaning you cannot see how many critical transactions are timing out or taking too long.
+
+Low Priority: 
+Deduplication RisksNaive duplicate removal: Fraudsters frequently launch "card-testing" attacks by submitting identical transactions in rapid succession. Removing duplicates without verifying the timestamps might erase the exact attack pattern you need to catch.
+
+
+
