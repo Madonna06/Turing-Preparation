@@ -1,0 +1,24 @@
+Problem Statement
+Our platform must prevent fraudulent transactions while keeping customer experience 
+smooth.
+So we must predict whether a transaction is fraudulent as early as possible.
+This helps avoid payment disruptions.
+Goals
+● Design a model that predicts if a transaction is fraud or not
+● Improve accuracy compared to current rules engine
+
+High Priority: 
+Missing Definitions & MetricsNo definition of "early as possible": It is unclear if prediction happens at checkout, authorization, or settlement.
+No specific latency constraints: Financial systems require strict millisecond-level response times to avoid disrupting payments.
+Vague performance goals: "Improve accuracy" is not measurable without defining specific metrics like Precision, Recall, or F1-Score.
+No baseline reference: The document mentions a "current rules engine" but provides no data on its current performance levels.
+
+Medium Priority: 
+Data & Operational GapsNo mention of data scale: System architecture depends heavily on knowing the daily or per-second transaction volume.
+Missing feature context: The snippet provides no details on available data points, such as user history, location, or device tokens.
+Class imbalance ignored: Fraud datasets are highly imbalanced, requiring specialized handling that is not addressed here.
+
+Low Priority: 
+Business ConstraintsNo mention of false positives: A smooth customer experience requires minimizing legitimate transactions flagged as fraud.
+Missing feedback loop: There is no strategy outlined for how the model will learn from newly discovered fraud patterns.
+
