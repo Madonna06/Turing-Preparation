@@ -505,6 +505,22 @@ Summary of Major Errors:
 | No evaluation metrics                              | Limited insight into model performance |
 
 
+Decision / Recommendation
+● Choose Deep NN with 22 layers → best R² so should reduce fraud losses
+● Run A/B test for 3 days
+● Randomise at customer level to measure retention
+● If no statistically significant result → extend a further 3 days
+
+ High Priority: 
+Flawed Evaluation & Invalid TestingUsing \(R^{2}\) to justify fraud reduction: \(R^{2}\) is a regression metric. It does not measure a model's ability to classify fraud or minimize chargebacks.
+Textbook p-hacking by extending the test: Extending an A/B test for a "further 3 days" only when results are not significant is a severe violation of statistical testing. It heavily inflates your false positive rate.
+Arbitrary, ultra-short test window (3 days): A 3-day window fails to capture weekly cyclical purchasing habits, like weekday versus weekend checkout behavior.
+Mismatched randomization metric: Randomizing at the customer level to measure retention completely ignores the primary goal of the system, which is tracking fraud leakage and checkout friction.
+🟡 Medium Priority:
+Operational Reality GapsIgnoring chargeback maturity lag: Fraud disputes and chargebacks take 30 to 90 days to surface from banks. A 3-day or 6-day test window is completely blind to whether the new model is actually leaking fraud.
+Doubling down on a broken model: Recommending the 22-layer Deep NN based on the previous slide's mathematically impossible results table is highly dangerous.
+
+
 
 
 
